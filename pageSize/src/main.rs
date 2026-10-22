@@ -61,7 +61,7 @@ fn main() {
     let mut best_page_size: u64 = 0;
     let mut best_penalty = f64::MAX;
 
-    for page_size in 30000..=33050 {
+    for page_size in 32000..=40000 {
         let penalty = calculate_penalty(page_size, &workloads);
 
         if penalty < best_penalty {
@@ -72,5 +72,36 @@ fn main() {
 
     println!("Overall average memory: {} bits", overall_average);
     println!("Best page size: {} bits", best_page_size);
-    println!("Average daily memory penalty: {} bits", best_penalty.ceil() as u64);
+    println!(
+        "Average daily memory penalty: {} bits",
+        best_penalty.ceil() as u64
+    );
+
+    println!("\nDaily Memory Penalties:\n");
+
+    for (day_index, requests) in workloads.iter().enumerate() {
+        let mut total_pages: u64 = 0;
+        let mut total_unused: u64 = 0;
+
+        for &memory in requests {
+            let pages_needed = memory.div_ceil(best_page_size);
+            let allocated_memory = pages_needed * best_page_size;
+            let unused_memory = allocated_memory - memory;
+
+            total_pages += pages_needed;
+            total_unused += unused_memory;
+        }
+
+        let bookkeeping = total_pages * 64;
+        let daily_penalty = total_unused + bookkeeping;
+
+        println!(
+            "Day {}: Programs = {}, Bookkeeping = {} bits, Unused = {} bits, Total Penalty = {} bits",
+            day_index + 1,
+            requests.len(),
+            bookkeeping,
+            total_unused,
+            daily_penalty
+        );
+    }
 }
